@@ -4,5 +4,6 @@
 !README.md
 
 !/include/
+!/include/*
 !main.cpp
 

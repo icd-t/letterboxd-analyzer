@@ -6,4 +6,6 @@
 !/include/
 !/include/*
 !main.cpp
-
+!analyze.cpp
+!/output/
+!/output/*

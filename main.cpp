@@ -8,6 +8,12 @@
 #include <string>
 using json = nlohmann::json;
 
+std::string cleanString(std::string inputStr) {
+  std::replace(inputStr.begin(), inputStr.end(), ',', ' ');
+  std::replace(inputStr.begin(), inputStr.end(), '\"', ' ');
+  return inputStr;
+}
+
 int main() {
   std::ifstream f("./data/lb.jsonl");  // Input file
   std::ofstream lbp("./data/lbp.csv"); // Output file
@@ -30,6 +36,10 @@ int main() {
   std::string lbURL{""};
   std::string posterURL{""};
 
+  // Create initial row in csv file
+  lbp << "index,name,director1,director2,genre1,genre2,year,rating,popularity,"
+         "lburl,posterurl\n";
+
   // Loop over all films in dataset
   for (int i = 0; i < rows; i++) {
     std::getline(f, line);
@@ -40,29 +50,33 @@ int main() {
       usableRows++;
       // Get film title
       name = data["title"].get<std::string>();
-      std::replace(name.begin(), name.end(), ',', ' ');
+      name = cleanString(name);
       // Get film director
       if (data["directors"][0] != nullptr) {
         director1 = data["directors"][0].get<std::string>();
       } else {
         director1 = "-";
       }
+      director1 = cleanString(director1);
       if (data["directors"][1] != nullptr) {
         director2 = data["directors"][1].get<std::string>();
       } else {
         director2 = "-";
       }
+      director2 = cleanString(director2);
       // Get film genres
       if (data["genres"][0] != nullptr) {
         genre1 = data["genres"][0].get<std::string>();
       } else {
         genre1 = "-";
       }
+      genre1 = cleanString(genre1);
       if (data["genres"][1] != nullptr) {
         genre2 = data["genres"][1].get<std::string>();
       } else {
         genre2 = "-";
       }
+      genre2 = cleanString(genre2);
       // Get film rating
       rating = std::stof(data["rating"].get<std::string>().substr(0, 4));
       // Get film release year

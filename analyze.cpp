@@ -29,13 +29,23 @@ int main() {
                          csv::DataFrameOptions().set_key_column("index"));
   cout << "Finished loading " << df.n_rows() << " rows..." << endl;
 
+  // Store counts of genres
+  array<tuple<string, int>, 19> genres{{
+      {"Action", 0},  {"Adventure", 0},   {"Animation", 0}, {"Comedy", 0},
+      {"Crime", 0},   {"Documentary", 0}, {"Drama", 0},     {"Family", 0},
+      {"Fantasy", 0}, {"History", 0},     {"Horror", 0},    {"Music", 0},
+      {"Mystery", 0}, {"Romance", 0},     {"Thriller", 0},  {"TV Movie", 0},
+      {"War", 0},     {"Western", 0},     {"Other", 0},
+  }};
+
   // Count volume by year
   cout << "Counting years..." << endl;
   // This array of tuples holds all the data that will be outputted to the csv
   // file. Variables from left to right: count of films in that year, count of
   // non-documentaries in that year, average rating, average rating (weighted by
-  // popularity), total popularity score per year
-  array<tuple<int, int, double, double, double>, 200> byYear{};
+  // popularity), total popularity score per year, an array storing counts for
+  // each individual genre as a function
+  array<tuple<int, int, double, double, double, array<int, 19>>, 200> byYear{};
   // Loop over all rows
   for (int i = 1; i < df.n_rows(); i++) {
     // Increment count for whatever year the current row is
@@ -54,9 +64,19 @@ int main() {
     // Increment populatity
     get<4>(byYear[(df[i]["year"].get<int>() - 1826)]) +=
         df[i]["popularity"].get<double>();
+    // Increment counts for each genre
+    for (int j = 0; j < size(get<5>(byYear[0])); j++) {
+      if (checkGenre(df, i, get<0>(genres[j]))) {
+        get<5>(byYear[(df[i]["year"].get<int>() - 1826)])[j] += 1;
+      }
+    }
   }
   cout << "Outputting years..." << endl;
-  f01 << "year,count,count-exdocs,popularity,rating,rating-pop-weighted\n";
+  f01 << "year,count,count-exdocs,popularity,rating,rating-pop-weighted";
+  for (int i = 0; i < size(genres); i++) {
+    f01 << "," << get<0>(genres[i]);
+  }
+  f01 << "\n";
   for (int i = 0; i < size(byYear); i++) {
     // Average the ratings column
 
@@ -73,6 +93,9 @@ int main() {
          to_string(get<1>(byYear[i])) + "," + to_string(get<2>(byYear[i])) +
          "," + to_string(get<3>(byYear[i])) + "," +
          to_string(get<4>(byYear[i])));
+    for (int j = 0; j < size(get<5>(byYear[0])); j++) {
+      currentRow += "," + to_string(get<5>(byYear[i])[j]);
+    }
     // cout << currentRow << endl;
     f01 << currentRow << "\n";
   }
@@ -80,13 +103,6 @@ int main() {
 
   // Count by genre
   cout << "Counting genres... " << endl;
-  array<tuple<string, int>, 19> genres{{
-      {"Action", 0},  {"Adventure", 0},   {"Animation", 0}, {"Comedy", 0},
-      {"Crime", 0},   {"Documentary", 0}, {"Drama", 0},     {"Family", 0},
-      {"Fantasy", 0}, {"History", 0},     {"Horror", 0},    {"Music", 0},
-      {"Mystery", 0}, {"Romance", 0},     {"Thriller", 0},  {"TV Movie", 0},
-      {"War", 0},     {"Western", 0},     {"Other", 0},
-  }};
   for (int i = 1; i < df.n_rows(); i++) {
     for (int j = 0; j < size(genres); j++) {
       if (checkGenre(df, i, get<0>(genres[j]))) {

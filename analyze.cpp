@@ -21,6 +21,7 @@ int main() {
   // Load in files
   ofstream f01("./output/by-year.csv");
   ofstream f02("./output/by-genre.csv");
+  ofstream f03("./output/by-rating.csv");
   string currentRow{};
 
   // Load in csv fie
@@ -72,11 +73,13 @@ int main() {
     }
   }
   cout << "Outputting years..." << endl;
+  // Write header of csv file
   f01 << "year,count,count-exdocs,popularity,rating,rating-pop-weighted";
   for (int i = 0; i < size(genres); i++) {
     f01 << "," << get<0>(genres[i]);
   }
   f01 << "\n";
+  // Write each row of csv file
   for (int i = 0; i < size(byYear); i++) {
     // Average the ratings column
 
@@ -119,8 +122,33 @@ int main() {
   }
   cout << "Finished outputting genres..." << endl;
 
+  // Count by rating
+  cout << "Counting by rating..." << endl;
+  // Column 1 is a rating catagory (starts at 1 and increments by 0.05), column
+  // 2 is the ammount of films that fall within that rating bucket
+  array<tuple<double, int>, 90> ratings{};
+  for (int i = 0; i < size(ratings); i++) {
+    get<0>(ratings[i]) = 0.5 + (0.05 * i);
+  }
+  for (int i = 1; i < df.n_rows(); i++) {
+    get<1>(ratings[static_cast<int>((df[i]["rating"].get<float>() - 0.5) /
+                                    0.05)]) += 1;
+  }
+  cout << "Finished counting by rating..." << endl;
+
+  // Output by rating
+  cout << "Outputting by rating..." << endl;
+  f03 << "rating,count\n";
+  for (int i = 0; i < size(ratings); i++) {
+    f03 << to_string(get<0>(ratings[i])) + "," + to_string(get<1>(ratings[i])) +
+               "\n";
+  }
+  cout << "Finished outputting by rating..." << endl;
+
   // Close files and exit
   f01.close();
   f02.close();
+  f03.close();
+  cout << "Done!";
   return 0;
 }

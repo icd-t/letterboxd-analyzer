@@ -45,8 +45,11 @@ int main() {
   // file. Variables from left to right: count of films in that year, count of
   // non-documentaries in that year, average rating, average rating (weighted by
   // popularity), total popularity score per year, an array storing counts for
-  // each individual genre as a function
-  array<tuple<int, int, double, double, double, array<int, 19>>, 200> byYear{};
+  // each individual genre, number of films that year that have an average
+  // rating above 4, percentage over 4 stars
+  array<tuple<int, int, double, double, double, array<int, 19>, int, double>,
+        200>
+      byYear{};
   // Loop over all rows
   for (int i = 1; i < df.n_rows(); i++) {
     // Increment count for whatever year the current row is
@@ -71,6 +74,11 @@ int main() {
         get<5>(byYear[(df[i]["year"].get<int>() - 1826)])[j] += 1;
       }
     }
+    // Increment count if above 4.0 stars
+    if (df[i]["rating"].get<double>() > 4.0) {
+      get<6>(byYear[(df[i]["year"].get<int>() - 1826)]) += 1;
+      get<7>(byYear[(df[i]["year"].get<int>() - 1826)]) += 1;
+    }
   }
   cout << "Outputting years..." << endl;
   // Write header of csv file
@@ -78,17 +86,18 @@ int main() {
   for (int i = 0; i < size(genres); i++) {
     f01 << "," << get<0>(genres[i]);
   }
-  f01 << "\n";
+  f01 << ",count-over-4.0\n";
   // Write each row of csv file
   for (int i = 0; i < size(byYear); i++) {
     // Average the ratings column
-
     if (get<2>(byYear[i]) != 0) {
       get<2>(byYear[i]) = get<2>(byYear[i]) / get<0>(byYear[i]);
       get<3>(byYear[i]) = get<3>(byYear[i]) / get<4>(byYear[i]);
+      get<7>(byYear[i]) = get<7>(byYear[i]) / get<0>(byYear[i]);
     } else {
       get<2>(byYear[i]) = 0;
       get<3>(byYear[i]) = 0;
+      get<7>(byYear[i]) = 0;
     }
     // Output
     currentRow =
@@ -99,6 +108,8 @@ int main() {
     for (int j = 0; j < size(get<5>(byYear[0])); j++) {
       currentRow += "," + to_string(get<5>(byYear[i])[j]);
     }
+    currentRow +=
+        "," + to_string(get<6>(byYear[i])) + "," + to_string(get<7>(byYear[i]));
     // cout << currentRow << endl;
     f01 << currentRow << "\n";
   }
@@ -149,6 +160,6 @@ int main() {
   f01.close();
   f02.close();
   f03.close();
-  cout << "Done!";
+  cout << "Done!\n";
   return 0;
 }
